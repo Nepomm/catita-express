@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catita Express</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <div class="container">
+        <!-- Logo Catita Express -->
+        <img src="{{ url_for('static', filename='images/catita_moneyup.jpeg') }}" alt="Logo Catita Express" class="logo">
+
+        <h1>💰 Catita Express</h1>
+        <p class="subtitulo">Simule seu empréstimo de forma rápida e prática</p>
+
+        <!-- Formulário para simulação -->
+        <form id="formulario" method="POST">
+            <label for="nome">Nome completo</label>
+            <input type="text" id="nome" name="nome" placeholder="Ex: João Silva" required>
+
+            <label for="cpf">CPF</label>
+            <input type="text" id="cpf" name="cpf" placeholder="Ex: 123.456.789-00" required>
+
+            <label for="celular">Celular (WhatsApp)</label>
+            <input type="text" id="celular" name="celular" placeholder="Ex: (11) 91234-5678" required>
+
+            <label for="valor">Valor do empréstimo (R$)</label>
+            <input type="number" id="valor" name="valor" step="0.01" placeholder="Ex: 1000" required>
+
+            <label for="dias">Prazo em dias</label>
+            <input type="number" id="dias" name="dias" placeholder="Ex: 30" required>
+
+            <button type="submit">Simular Empréstimo</button>
+        </form>
+
+        <div id="resultado"></div> <!-- Resultado será inserido aqui -->
+
+        <!-- Rodapé -->
+        <footer>
+            <p>Catita Express &copy; 2025</p>
+        </footer>
+    </div>
+
+    <script>
+        document.getElementById('formulario').addEventListener('submit', async function(event) {
+            event.preventDefault(); // Previne o envio do formulário
+
+            const formData = new FormData(event.target); // Coleta os dados do formulário
+
+            // Envia os dados para o backend Flask
+            const response = await fetch(window.location.href, {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await response.json(); // Recebe a resposta como JSON
+
+            const resultadoDiv = document.getElementById('resultado');
+            
+            if (data.erro) {
+                // Se houver erro, exibe a mensagem
+                resultadoDiv.innerHTML = `<p style="color: red;">Erro: ${data.erro}</p>`;
+            } else {
+                // Exibe os resultados da simulação
+                resultadoDiv.innerHTML = `
+                    <h2>📄 Resultado da Simulação</h2>
+                    <p><strong>Nome:</strong> ${data.nome}</p>
+                    <p><strong>CPF:</strong> ${data.cpf}</p>
+                    <p><strong>Celular:</strong> ${data.celular}</p>
+                    <p><strong>Valor solicitado:</strong> R$ ${data.valor.toFixed(2)}</p>
+                    <p><strong>Prazo:</strong> ${data.dias} dias</p>
+                    <p><strong>Juros:</strong> R$ ${data.juros.toFixed(2)}</p>
+                    <p><strong>Total a pagar:</strong> R$ ${data.total.toFixed(2)}</p>
+                `;
+            }
+        });
+
+        // Função para formatar CPF
+        function formatarCPF(cpf) {
+            return cpf.replace(/\D/g, "") // Remove tudo que não for número
+                      .replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
+        }
+
+        // Função para formatar Celular
+        function formatarCelular(celular) {
+            return celular.replace(/\D/g, "") // Remove tudo que não for número
+                          .replace(/^(\d{2})(\d{5})(\d{4})$/, "($1) $2-$3");
+        }
+
+        // Aplica a formatação enquanto o usuário digita
+        document.getElementById('cpf').addEventListener('input', function(event) {
+            event.target.value = formatarCPF(event.target.value);
+        });
+
+        document.getElementById('celular').addEventListener('input', function(event) {
+            event.target.value = formatarCelular(event.target.value);
+        });
+    </script>
+
+</body>
+</html>
+

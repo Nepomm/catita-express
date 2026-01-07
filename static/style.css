@@ -1,0 +1,111 @@
+/* Reset e estilo geral */
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #f0f2f5;
+    color: #333;
+}
+
+/* Container centralizado */
+.container {
+    max-width: 450px;
+    margin: 50px auto;
+    background: #fff;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+/* Logo */
+.logo {
+    display: block;
+    margin: 0 auto 15px;
+    width: 120px;
+    height: auto;
+    border-radius: 10px;
+}
+
+/* Título principal */
+h1 {
+    color: #2c7be5;
+    margin-bottom: 5px;
+}
+
+.subtitulo {
+    font-size: 14px;
+    color: #555;
+    margin-bottom: 25px;
+}
+
+/* Formulário */
+form {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start; /* Alinha todos os campos à esquerda */
+    width: 100%;
+}
+
+/* Estilo dos campos do formulário */
+label {
+    margin-top: 15px;
+    margin-bottom: 5px;
+    font-weight: bold;
+    width: 100%;
+    text-align: left;
+}
+
+/* Input geral */
+input {
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 14px;
+    width: 100%; /* Garantir que o campo ocupe toda a largura */
+    margin-bottom: 15px;
+}
+
+/* Botão */
+button {
+    margin-top: 20px;
+    padding: 12px;
+    background-color: #2c7be5;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    width: 100%;
+    transition: 0.3s;
+}
+
+button:hover {
+    background-color: #1a5dc9;
+}
+
+/* Resultado da simulação */
+#resultado {
+    margin-top: 30px;
+    padding: 20px;
+    background-color: #e9f0ff;
+    border-radius: 10px;
+    text-align: left;
+}
+
+#resultado h2 {
+    margin-top: 0;
+    color: #2c7be5;
+}
+
+#resultado p {
+    font-size: 16px;
+    color: #333;
+}
+
+/* Rodapé */
+footer {
+    margin-top: 30px;
+    font-size: 12px;
+    color: #777;
+}
