@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, jsonify, session
 import json
 from datetime import datetime
+import os  # Adicionado para pegar PORT do ambiente
 
 app = Flask(__name__)
 app.secret_key = "chave_super_secreta"  # Para sessões
@@ -127,5 +128,7 @@ def index():
         mostrar_painel=session.get("admin", False)
     )
 
+# === Ajuste para produção (Railway / Render) ===
 if __name__ == "__main__":
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
