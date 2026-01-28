@@ -1,104 +1,279 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Catita Express</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Catita Express</title>
+<style>
+body {background:#e5e9f2; font-family:Arial,sans-serif;}
+.container {background:white; max-width:400px; margin:80px auto; padding:25px 25px 35px 25px; border-radius:15px; box-shadow:0 0 20px rgba(0,0,0,0.1); text-align:center;}
+.logo {max-width:120px; margin-bottom:15px; user-select:none;}
+h1 {color:#1565d8; font-weight:bold; font-size:28px; margin-bottom:8px;}
+.subtitulo {font-size:14px; color:#3a3a3a; margin-bottom:22px;}
+label {display:block; text-align:left; font-weight:600; margin-top:14px; font-size:14px;}
+input[type="text"],input[type="number"],input[type="password"] {width:100%; padding:10px 12px; margin-top:6px; border-radius:8px; border:1px solid #ccc; font-size:15px; box-sizing:border-box;}
+button,a.btn {font-weight:bold; font-size:15px; border-radius:8px; padding:10px 18px; border:none; cursor:pointer; margin-top:18px; user-select:none; text-decoration:none; display:inline-block;}
+button#btnSolicitar {background-color:#1565d8; color:white; width:100%; margin-top:20px;}
+a.btn-primary {background-color:#1565d8; color:white; margin-right:10px;}
+a.btn-danger {background-color:#d9534f; color:white;}
+#painelAdmin {margin-top:20px; max-height:350px; overflow-y:auto; background:#fff; border-radius:10px; box-shadow:0 0 12px rgba(0,0,0,0.07); padding:15px; text-align:left;}
+#painelAdmin table {width:100%; border-collapse:collapse;}
+#painelAdmin th,#painelAdmin td {padding:10px 8px; border-bottom:1px solid #ddd; font-size:14px; min-width:80px;}
+#painelAdmin th {background-color:#1565d8; color:white; position:sticky; top:0; z-index:1;}
+#painelAdmin tr:hover {background-color:#f1f7ff;}
+#resultado {background:#e8f0fe; padding:15px; border-radius:8px; margin-top:20px; text-align:left; color:#222; font-size:15px;}
+footer {font-size:13px; color:#888; margin-top:38px; user-select:none;}
+
+/* Modal login admin */
+#loginAdmin {display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.6); z-index:9999; justify-content:center; align-items:center;}
+#loginAdmin > div {background:#fff; padding:25px 20px; border-radius:12px; max-width:320px; width:90%; text-align:center; box-shadow:0 0 15px rgba(0,0,0,0.3);}
+#loginAdmin input {width:100%; padding:10px; margin:10px 0; border-radius:8px; border:1px solid #ccc; font-size:16px;}
+#loginAdmin button {padding:10px 15px; margin:5px; border-radius:8px; border:none; cursor:pointer; font-weight:bold; font-size:16px;}
+#loginAdmin button:first-child {background-color:#2c7be5; color:#fff; width:45%;}
+#loginAdmin button:last-child {background-color:#999; color:#fff; width:45%;}
+#erroLogin {color:red; margin-top:10px; display:none;}
+</style>
 </head>
 <body>
 
-    <div class="container">
-        <!-- Logo Catita Express -->
-        <img src="{{ url_for('static', filename='images/catita_moneyup.jpeg') }}" alt="Logo Catita Express" class="logo">
+<div class="container">
 
-        <h1>💰 Catita Express</h1>
-        <p class="subtitulo">Simule seu empréstimo de forma rápida e prática</p>
+<img src="{{ url_for('static', filename='images/catita_moneyup.jpeg') }}" alt="Logo Catita Express" class="logo">
 
-        <!-- Formulário para simulação -->
-        <form id="formulario" method="POST">
-            <label for="nome">Nome completo</label>
-            <input type="text" id="nome" name="nome" placeholder="Ex: João Silva" required>
+<h1>💰 Catita Express</h1>
+<p class="subtitulo">Simule seu empréstimo de forma rápida e prática</p>
 
-            <label for="cpf">CPF</label>
-            <input type="text" id="cpf" name="cpf" placeholder="Ex: 123.456.789-00" required>
-
-            <label for="celular">Celular (WhatsApp)</label>
-            <input type="text" id="celular" name="celular" placeholder="Ex: (11) 91234-5678" required>
-
-            <label for="valor">Valor do empréstimo (R$)</label>
-            <input type="number" id="valor" name="valor" step="0.01" placeholder="Ex: 1000" required>
-
-            <label for="dias">Prazo em dias</label>
-            <input type="number" id="dias" name="dias" placeholder="Ex: 30" required>
-
-            <button type="submit">Simular Empréstimo</button>
-        </form>
-
-        <div id="resultado"></div> <!-- Resultado será inserido aqui -->
-
-        <!-- Rodapé -->
-        <footer>
-            <p>Catita Express &copy; 2025</p>
-        </footer>
+{% if admin_logado %}
+    <div>
+        <button onclick="togglePainel()" style="background:#1565d8;color:white;border:none;padding:10px 15px;border-radius:8px;margin-right:10px;cursor:pointer;">📋 Painel Administrativo</button>
+        <button onclick="logout()" style="background:#d9534f;color:white;border:none;padding:10px 15px;border-radius:8px;cursor:pointer;">Sair</button>
     </div>
 
-    <script>
-        document.getElementById('formulario').addEventListener('submit', async function(event) {
-            event.preventDefault(); // Previne o envio do formulário
+    {% if mostrar_painel %}
+        <div id="painelAdmin">
+        <h2>📋 Solicitações de Empréstimo</h2>
+        {% if solicitacoes %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Nome</th>
+                        <th>CPF</th>
+                        <th>Celular</th>
+                        <th>Valor</th>
+                        <th>Dias</th>
+                        <th>Juros</th>
+                        <th>Total</th>
+                        <th>Excluir</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for s in solicitacoes %}
+                    <tr>
+                        <td>{{ s.data }}</td>
+                        <td>{{ s.nome }}</td>
+                        <td>{{ s.cpf }}</td>
+                        <td>{{ s.celular }}</td>
+                        <td>R$ {{ '%.2f'|format(s.valor) }}</td>
+                        <td>{{ s.dias }}</td>
+                        <td>R$ {{ '%.2f'|format(s.juros) }}</td>
+                        <td>R$ {{ '%.2f'|format(s.total) }}</td>
+                        <td><button class="btn-excluir" data-index="{{ loop.index0 }}" style="background:#d9534f;color:white;border:none;padding:6px 10px;border-radius:6px;cursor:pointer;">Excluir</button></td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>Nenhuma solicitação ainda.</p>
+        {% endif %}
+        </div>
+    {% endif %}
 
-            const formData = new FormData(event.target); // Coleta os dados do formulário
+{% else %}
 
-            // Envia os dados para o backend Flask
-            const response = await fetch(window.location.href, {
-                method: 'POST',
-                body: formData
-            });
+<form id="formulario">
+    <label for="nome">Nome completo</label>
+    <input type="text" id="nome" name="nome" placeholder="Ex: João Silva" required>
 
-            const data = await response.json(); // Recebe a resposta como JSON
+    <label for="cpf">CPF</label>
+    <input type="text" id="cpf" name="cpf" placeholder="123.456.789-00" required>
 
-            const resultadoDiv = document.getElementById('resultado');
-            
-            if (data.erro) {
-                // Se houver erro, exibe a mensagem
-                resultadoDiv.innerHTML = `<p style="color: red;">Erro: ${data.erro}</p>`;
-            } else {
-                // Exibe os resultados da simulação
-                resultadoDiv.innerHTML = `
-                    <h2>📄 Resultado da Simulação</h2>
-                    <p><strong>Nome:</strong> ${data.nome}</p>
-                    <p><strong>CPF:</strong> ${data.cpf}</p>
-                    <p><strong>Celular:</strong> ${data.celular}</p>
-                    <p><strong>Valor solicitado:</strong> R$ ${data.valor.toFixed(2)}</p>
-                    <p><strong>Prazo:</strong> ${data.dias} dias</p>
-                    <p><strong>Juros:</strong> R$ ${data.juros.toFixed(2)}</p>
-                    <p><strong>Total a pagar:</strong> R$ ${data.total.toFixed(2)}</p>
-                `;
-            }
-        });
+    <label for="celular">Celular (WhatsApp)</label>
+    <input type="text" id="celular" name="celular" placeholder="(11) 91234-5678" required>
 
-        // Função para formatar CPF
-        function formatarCPF(cpf) {
-            return cpf.replace(/\D/g, "") // Remove tudo que não for número
-                      .replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
+    <label for="valor">Valor do empréstimo (R$)</label>
+    <input type="number" id="valor" name="valor" step="0.01" placeholder="1000" required>
+
+    <label for="dias">Prazo em dias</label>
+    <input type="number" id="dias" name="dias" placeholder="30" required>
+
+    <button type="button" id="btnSolicitar">Solicitar dinheiro</button>
+</form>
+
+<div id="resultado"></div>
+
+<button onclick="abrirLogin()" style="margin-top:15px;">🔐 Login Admin</button>
+
+{% endif %}
+
+<footer>
+<p>Catita Express &copy; 2025</p>
+</footer>
+</div>
+
+<!-- Modal login admin -->
+<div id="loginAdmin">
+    <div>
+        <h3>🔐 Login Admin</h3>
+        <input type="text" id="usuario" placeholder="Usuário">
+        <input type="password" id="senha" placeholder="Senha">
+        <div>
+            <button onclick="login()">Entrar</button>
+            <button onclick="fecharLogin()">Cancelar</button>
+        </div>
+        <p id="erroLogin"></p>
+    </div>
+</div>
+
+<script>
+const form = document.getElementById("formulario");
+const btnSolicitar = document.getElementById("btnSolicitar");
+const resultado = document.getElementById("resultado");
+
+// Variável global para guardar a simulação
+let dadosSimulacao = null;
+
+// Envio simulação
+btnSolicitar?.addEventListener("click", ()=>{
+    if(!form.checkValidity()){form.reportValidity(); return;}
+    const formData = new FormData(form);
+    formData.append("acao","solicitar");
+    fetch("/",{method:"POST",body:formData})
+    .then(r=>r.json())
+    .then(data=>{
+        if(data.erro){resultado.innerHTML=`<p style="color:red;">Erro: ${data.erro}</p>`;}
+        else{
+            // Guarda os dados da simulação para confirmar depois
+            dadosSimulacao = data;
+
+            resultado.innerHTML=`
+            <h2>📄 Resultado da Simulação</h2>
+            <p><strong>Nome:</strong> ${data.nome}</p>
+            <p><strong>CPF:</strong> ${data.cpf}</p>
+            <p><strong>Celular:</strong> ${data.celular}</p>
+            <p><strong>Valor solicitado:</strong> R$ ${data.valor.toFixed(2)}</p>
+            <p><strong>Prazo:</strong> ${data.dias} dias</p>
+            <p><strong>Juros:</strong> R$ ${data.juros.toFixed(2)}</p>
+            <p><strong>Total a pagar:</strong> R$ ${data.total.toFixed(2)}</p>
+
+            <button onclick="confirmarSolicitacao()" style="
+                margin-top:15px;
+                background:#1565d8;
+                color:white;
+                border:none;
+                padding:10px 15px;
+                border-radius:8px;
+                cursor:pointer;
+                width:100%;
+            ">
+                ✅ Confirmar solicitação
+            </button>
+            `;
         }
+    }).catch(()=>{resultado.innerHTML=`<p style="color:red;">Erro ao comunicar com o servidor.</p>`;});
+});
 
-        // Função para formatar Celular
-        function formatarCelular(celular) {
-            return celular.replace(/\D/g, "") // Remove tudo que não for número
-                          .replace(/^(\d{2})(\d{5})(\d{4})$/, "($1) $2-$3");
+// Máscaras
+document.getElementById('cpf')?.addEventListener('input', e=>{
+    let v=e.target.value.replace(/\D/g,'').slice(0,11);
+    v=v.replace(/(\d{3})(\d)/,'$1.$2');
+    v=v.replace(/(\d{3})(\d)/,'$1.$2');
+    v=v.replace(/(\d{3})(\d{1,2})$/,'$1-$2');
+    e.target.value=v;
+});
+document.getElementById('celular')?.addEventListener('input', e=>{
+    let v=e.target.value.replace(/\D/g,'').slice(0,11);
+    v=v.replace(/^(\d{2})(\d)/,'($1) $2');
+    v=v.replace(/(\d{5})(\d)/,'$1-$2');
+    e.target.value=v;
+});
+
+// Modal login admin
+const loginAdmin = document.getElementById("loginAdmin");
+const erroLogin = document.getElementById("erroLogin");
+function abrirLogin(){erroLogin.style.display="none"; loginAdmin.style.display="flex";}
+function fecharLogin(){loginAdmin.style.display="none";}
+
+// Login admin
+function login(){
+    const usuario=document.getElementById("usuario").value.trim();
+    const senha=document.getElementById("senha").value.trim();
+    if(!usuario||!senha){erroLogin.textContent="Preencha usuário e senha."; erroLogin.style.display="block"; return;}
+    const formData=new FormData();
+    formData.append("acao","login");
+    formData.append("usuario",usuario);
+    formData.append("senha",senha);
+    fetch("/",{method:"POST",body:formData})
+    .then(r=>r.json())
+    .then(data=>{
+        if(data.ok){location.reload();}
+        else{erroLogin.textContent=data.erro||"Erro no login."; erroLogin.style.display="block";}
+    });
+}
+
+// Logout
+function logout(){
+    const formData=new FormData();
+    formData.append("acao","logout");
+    fetch("/",{method:"POST",body:formData}).then(()=>location.reload());
+}
+
+// Toggle painel
+function togglePainel(){
+    const painel = document.getElementById("painelAdmin");
+    if(painel) painel.style.display = painel.style.display === "none" ? "block" : "none";
+}
+
+// Excluir solicitações
+document.querySelectorAll('.btn-excluir').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+        if(!confirm("Deseja realmente excluir esta solicitação?")) return;
+        const index = btn.dataset.index;
+        const formData = new FormData();
+        formData.append("acao","excluir");
+        formData.append("index", index);
+        fetch("/", {method:"POST", body:formData})
+        .then(r=>r.json())
+        .then(data=>{
+            if(data.ok){ location.reload(); }
+            else{ alert("Erro ao excluir"); }
+        });
+    });
+});
+
+// CONFIRMAR SOLICITAÇÃO
+function confirmarSolicitacao(){
+    if(!dadosSimulacao) return;
+
+    const formData = new FormData();
+    formData.append("acao","confirmar");
+    formData.append("dados", JSON.stringify(dadosSimulacao));
+
+    fetch("/", {method:"POST", body:formData})
+    .then(r=>r.json())
+    .then(data=>{
+        if(data.ok){
+            resultado.innerHTML = `<p style="color:green;font-weight:bold;">
+                ✅ Solicitação confirmada com sucesso!
+            </p>`;
+            form.reset();
+            dadosSimulacao = null;
+        } else {
+            alert("Erro ao confirmar solicitação");
         }
-
-        // Aplica a formatação enquanto o usuário digita
-        document.getElementById('cpf').addEventListener('input', function(event) {
-            event.target.value = formatarCPF(event.target.value);
-        });
-
-        document.getElementById('celular').addEventListener('input', function(event) {
-            event.target.value = formatarCelular(event.target.value);
-        });
-    </script>
+    });
+}
+</script>
 
 </body>
 </html>
-
