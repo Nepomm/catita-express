@@ -1,63 +1,131 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, session
+import json
+from datetime import datetime
 
 app = Flask(__name__)
+app.secret_key = "chave_super_secreta"  # Para sessões
 
-# Função para validar CPF (simples, apenas formato básico)
-def validar_cpf(cpf):
-    return len(cpf) == 14 and cpf[3] == '.' and cpf[7] == '.' and cpf[11] == '-'
+ADMIN_USUARIO = "admin"
+ADMIN_SENHA = "minhasenha123"
+ARQUIVO_SOLICITACOES = "solicitacoes.json"
 
-# Função para validar o formato do celular (simples, apenas formato básico)
-def validar_celular(celular):
-    return len(celular) == 15 and celular[0] == '(' and celular[3] == ')'
+# Tabela fixa de empréstimos
+TABELA_EMPRESTIMOS = {
+    100: {15: 180, 30: 200},
+    150: {15: 280, 30: 300},
+    200: {15: 300, 30: 350},
+    250: {15: 350, 30: 450},
+    300: {15: 430, 30: 500},
+    350: {15: 480, 30: 550},
+    400: {15: 530, 30: 600},
+    450: {15: 600, 30: 700},
+    500: {15: 650, 30: 750},
+    550: {15: 750, 30: 800},
+    600: {15: 730, 30: 800},
+    650: {15: 800, 30: 850},
+    700: {15: 850, 30: 900},
+    750: {15: 930, 30: 980},
+    800: {15: 950, 30: 1000},
+    850: {15: 1100, 30: 1200},
+    900: {15: 1050, 30: 1200},
+    950: {15: 1200, 30: 1300},
+    1000: {15: 1250, 30: 1400},
+}
 
+# Funções auxiliares
+def carregar_solicitacoes():
+    try:
+        with open(ARQUIVO_SOLICITACOES, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except:
+        return []
+
+def salvar_solicitacao(dados):
+    dados["data"] = datetime.now().strftime("%d/%m/%Y %H:%M")
+    solicitacoes = carregar_solicitacoes()
+    solicitacoes.append(dados)
+    with open(ARQUIVO_SOLICITACOES, "w", encoding="utf-8") as f:
+        json.dump(solicitacoes, f, ensure_ascii=False, indent=4)
+
+# Rota principal (GET e POST)
 @app.route("/", methods=["GET", "POST"])
 def index():
     if request.method == "POST":
-        try:
-            # Recebe os dados do formulário
-            nome = request.form["nome"]
-            cpf = request.form["cpf"]
-            celular = request.form["celular"]
-            valor = float(request.form["valor"])
-            dias = int(request.form["dias"])
+        acao = request.form.get("acao")
 
-            # Validação CPF e Celular
-            if not validar_cpf(cpf):
-                return jsonify({"erro": "CPF inválido. Formato esperado: xxx.xxx.xxx-xx."})
+        # LOGIN ADMIN
+        if acao == "login":
+            usuario = request.form.get("usuario")
+            senha = request.form.get("senha")
+            if usuario == ADMIN_USUARIO and senha == ADMIN_SENHA:
+                session["admin"] = True
+                return jsonify(ok=True)
+            return jsonify(ok=False, erro="Usuário ou senha incorretos")
 
-            if not validar_celular(celular):
-                return jsonify({"erro": "Celular inválido. Formato esperado: (xx) xxxxx-xxxx."})
+        # LOGOUT ADMIN
+        elif acao == "logout":
+            session.clear()
+            return jsonify(ok=True)
 
-            if valor <= 0 or dias <= 0:
-                return jsonify({"erro": "Por favor, insira valores positivos para valor e dias."})
+        # SIMULAÇÃO (NÃO SALVA)
+        elif acao == "solicitar":
+            try:
+                nome = request.form["nome"]
+                cpf = request.form["cpf"]
+                celular = request.form["celular"]
+                valor = int(float(request.form["valor"]))
+                dias = int(request.form["dias"])
 
-            # Taxa de juros: 5% a cada 3 dias
-            taxa_3_dias = 0.05
-            periodos = dias / 3
+                if valor not in TABELA_EMPRESTIMOS or dias not in TABELA_EMPRESTIMOS[valor]:
+                    return jsonify({"erro": "Valor ou prazo inválido."})
 
-            # Cálculo dos juros simples
-            juros = valor * taxa_3_dias * periodos
-            total = valor + juros
+                total = TABELA_EMPRESTIMOS[valor][dias]
+                juros = total - valor
 
-            # Cria dicionário com resultado para enviar ao HTML
-            resultado = {
-                "nome": nome,
-                "cpf": cpf,
-                "celular": celular,
-                "valor": valor,
-                "dias": dias,
-                "juros": round(juros, 2),
-                "total": round(total, 2)
-            }
+                return jsonify({
+                    "nome": nome,
+                    "cpf": cpf,
+                    "celular": celular,
+                    "valor": valor,
+                    "dias": dias,
+                    "juros": juros,
+                    "total": total
+                })
 
-            # Retorna os dados no formato JSON para o frontend
-            return jsonify(resultado)
+            except Exception as e:
+                return jsonify({"erro": str(e)})
 
-        except Exception as e:
-            return jsonify({"erro": str(e)})
+        # CONFIRMAR SOLICITAÇÃO (SALVA)
+        elif acao == "confirmar":
+            try:
+                dados = json.loads(request.form.get("dados"))
+                salvar_solicitacao(dados)
+                return jsonify(ok=True)
+            except Exception as e:
+                return jsonify(ok=False, erro=str(e))
 
-    # Caso a requisição seja GET, renderiza o template
-    return render_template("index.html")
+        # EXCLUIR SOLICITAÇÃO
+        elif acao == "excluir":
+            try:
+                index = int(request.form.get("index"))
+                solicitacoes = carregar_solicitacoes()
+                if 0 <= index < len(solicitacoes):
+                    solicitacoes.pop(index)
+                    with open(ARQUIVO_SOLICITACOES, "w", encoding="utf-8") as f:
+                        json.dump(solicitacoes, f, ensure_ascii=False, indent=4)
+                    return jsonify(ok=True)
+                return jsonify(ok=False)
+            except Exception as e:
+                return jsonify(ok=False, erro=str(e))
+
+    # GET -> renderiza página
+    solicitacoes = carregar_solicitacoes() if session.get("admin") else []
+    return render_template(
+        "index.html",
+        admin_logado=session.get("admin", False),
+        solicitacoes=solicitacoes,
+        mostrar_painel=session.get("admin", False)
+    )
 
 if __name__ == "__main__":
     app.run(debug=True)
