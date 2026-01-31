@@ -1,14 +1,15 @@
 from flask import Flask, render_template, request, jsonify, session
 import json
 from datetime import datetime
-import os  # Adicionado para pegar PORT do ambiente
+import os  # Para pegar PORT do ambiente
+import psycopg2
+from urllib.parse import urlparse
 
 app = Flask(__name__)
 app.secret_key = "chave_super_secreta"  # Para sessões
 
 ADMIN_USUARIO = "admin"
 ADMIN_SENHA = "minhasenha123"
-ARQUIVO_SOLICITACOES = "solicitacoes.json"
 
 # Tabela fixa de empréstimos
 TABELA_EMPRESTIMOS = {
@@ -33,22 +34,85 @@ TABELA_EMPRESTIMOS = {
     1000: {15: 1300, 30: 1500},
 }
 
-# Funções auxiliares
+# -------------------- Conexão com PostgreSQL --------------------
+def get_db():
+    url = os.environ.get("DATABASE_URL")
+    result = urlparse(url)
+    return psycopg2.connect(
+        database=result.path[1:],  # remove a barra inicial
+        user=result.username,
+        password=result.password,
+        host=result.hostname,
+        port=result.port,
+    )
+
+# Inicializa a tabela se não existir
+def init_db():
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS solicitacoes (
+            id SERIAL PRIMARY KEY,
+            nome TEXT,
+            cpf TEXT,
+            celular TEXT,
+            valor INTEGER,
+            dias INTEGER,
+            juros INTEGER,
+            total INTEGER,
+            data TEXT
+        )
+    """)
+    conn.commit()
+    cur.close()
+    conn.close()
+
+init_db()
+
+# -------------------- Funções de salvar e carregar --------------------
 def carregar_solicitacoes():
-    try:
-        with open(ARQUIVO_SOLICITACOES, "r", encoding="utf-8") as f:
-            return json.load(f)
-    except:
-        return []
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("SELECT nome, cpf, celular, valor, dias, juros, total, data FROM solicitacoes ORDER BY id DESC")
+    rows = cur.fetchall()
+    cur.close()
+    conn.close()
+
+    return [
+        {
+            "nome": r[0],
+            "cpf": r[1],
+            "celular": r[2],
+            "valor": r[3],
+            "dias": r[4],
+            "juros": r[5],
+            "total": r[6],
+            "data": r[7],
+        }
+        for r in rows
+    ]
 
 def salvar_solicitacao(dados):
-    dados["data"] = datetime.now().strftime("%d/%m/%Y %H:%M")
-    solicitacoes = carregar_solicitacoes()
-    solicitacoes.append(dados)
-    with open(ARQUIVO_SOLICITACOES, "w", encoding="utf-8") as f:
-        json.dump(solicitacoes, f, ensure_ascii=False, indent=4)
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("""
+        INSERT INTO solicitacoes (nome, cpf, celular, valor, dias, juros, total, data)
+        VALUES (%s,%s,%s,%s,%s,%s,%s,%s)
+    """, (
+        dados["nome"],
+        dados["cpf"],
+        dados["celular"],
+        dados["valor"],
+        dados["dias"],
+        dados["juros"],
+        dados["total"],
+        datetime.now().strftime("%d/%m/%Y %H:%M"),
+    ))
+    conn.commit()
+    cur.close()
+    conn.close()
 
-# Rota principal (GET e POST)
+# -------------------- Rota principal --------------------
 @app.route("/", methods=["GET", "POST"])
 def index():
     if request.method == "POST":
@@ -109,11 +173,16 @@ def index():
         elif acao == "excluir":
             try:
                 index = int(request.form.get("index"))
-                solicitacoes = carregar_solicitacoes()
-                if 0 <= index < len(solicitacoes):
-                    solicitacoes.pop(index)
-                    with open(ARQUIVO_SOLICITACOES, "w", encoding="utf-8") as f:
-                        json.dump(solicitacoes, f, ensure_ascii=False, indent=4)
+                conn = get_db()
+                cur = conn.cursor()
+                cur.execute("SELECT id FROM solicitacoes ORDER BY id DESC")
+                ids = [row[0] for row in cur.fetchall()]
+                if 0 <= index < len(ids):
+                    id_para_excluir = ids[index]
+                    cur.execute("DELETE FROM solicitacoes WHERE id = %s", (id_para_excluir,))
+                    conn.commit()
+                    cur.close()
+                    conn.close()
                     return jsonify(ok=True)
                 return jsonify(ok=False)
             except Exception as e:
@@ -132,3 +201,4 @@ def index():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
+
