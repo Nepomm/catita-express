@@ -140,6 +140,7 @@ def index():
             try:
                 nome = request.form["nome"]
                 cpf = request.form["cpf"]
+                endereco = request.form["endereco"]
                 celular = request.form["celular"]
                 valor = int(float(request.form["valor"]))
                 dias = int(request.form["dias"])
@@ -153,6 +154,7 @@ def index():
                 return jsonify({
                     "nome": nome,
                     "cpf": cpf,
+                    "endereco": endereco,
                     "celular": celular,
                     "valor": valor,
                     "dias": dias,
