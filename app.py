@@ -101,14 +101,14 @@ def salvar_solicitacao(dados):
         INSERT INTO solicitacoes (nome, cpf, endereco, celular, valor, dias, juros, total, data)
         VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)
     """, (
-        dados["nome"],
-        dados["cpf"],
-        dados["endereco"],
-        dados["celular"],
-        dados["valor"],
-        dados["dias"],
-        dados["juros"],
-        dados["total"],
+        dados.get("nome"),
+        dados.get("cpf"),
+        dados.get("endereco"),  # garante que endereço seja salvo
+        dados.get("celular"),
+        dados.get("valor"),
+        dados.get("dias"),
+        dados.get("juros"),
+        dados.get("total"),
         datetime.now().strftime("%d/%m/%Y %H:%M"),
     ))
     conn.commit()
@@ -206,4 +206,3 @@ def index():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
-
