@@ -59,6 +59,7 @@ footer {font-size:13px; color:#888; margin-top:38px; user-select:none;}
                         <th>Data</th>
                         <th>Nome</th>
                         <th>CPF</th>
+                        <th>Endereco</th>
                         <th>Celular</th>
                         <th>Valor</th>
                         <th>Dias</th>
@@ -73,6 +74,7 @@ footer {font-size:13px; color:#888; margin-top:38px; user-select:none;}
                         <td>{{ s.data }}</td>
                         <td>{{ s.nome }}</td>
                         <td>{{ s.cpf }}</td>
+                        <td>{{ s.endereco }}</td>
                         <td>{{ s.celular }}</td>
                         <td>R$ {{ '%.2f'|format(s.valor) }}</td>
                         <td>{{ s.dias }}</td>
@@ -94,6 +96,9 @@ footer {font-size:13px; color:#888; margin-top:38px; user-select:none;}
 <form id="formulario">
     <label for="nome">Nome completo</label>
     <input type="text" id="nome" name="nome" placeholder="Ex: João Silva" required>
+
+    <label for="endereco">Endereço</label>
+    <input type="text" id="endereco" name="endereco" placeholder="Ex: Rua Exemplo, 123" required>
 
     <label for="cpf">CPF</label>
     <input type="text" id="cpf" name="cpf" placeholder="123.456.789-00" required>
