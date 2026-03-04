@@ -5,7 +5,33 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Catita Express</title>
 <style>
-/* ... todo o CSS anterior permanece exatamente igual ... */
+body {background:#e5e9f2; font-family:Arial,sans-serif;}
+.container {background:white; max-width:400px; margin:80px auto; padding:25px 25px 35px 25px; border-radius:15px; box-shadow:0 0 20px rgba(0,0,0,0.1); text-align:center;}
+.logo {max-width:120px; margin-bottom:15px; user-select:none;}
+h1 {color:#1565d8; font-weight:bold; font-size:28px; margin-bottom:8px;}
+.subtitulo {font-size:14px; color:#3a3a3a; margin-bottom:22px;}
+label {display:block; text-align:left; font-weight:600; margin-top:14px; font-size:14px;}
+input[type="text"],input[type="number"],input[type="password"] {width:100%; padding:10px 12px; margin-top:6px; border-radius:8px; border:1px solid #ccc; font-size:15px; box-sizing:border-box;}
+button,a.btn {font-weight:bold; font-size:15px; border-radius:8px; padding:10px 18px; border:none; cursor:pointer; margin-top:18px; user-select:none; text-decoration:none; display:inline-block;}
+button#btnSolicitar {background-color:#1565d8; color:white; width:100%; margin-top:20px;}
+a.btn-primary {background-color:#1565d8; color:white; margin-right:10px;}
+a.btn-danger {background-color:#d9534f; color:white;}
+#painelAdmin {margin-top:20px; max-height:350px; overflow-y:auto; background:#fff; border-radius:10px; box-shadow:0 0 12px rgba(0,0,0,0.07); padding:15px; text-align:left;}
+#painelAdmin table {width:100%; border-collapse:collapse;}
+#painelAdmin th,#painelAdmin td {padding:10px 8px; border-bottom:1px solid #ddd; font-size:14px; min-width:80px;}
+#painelAdmin th {background-color:#1565d8; color:white; position:sticky; top:0; z-index:1;}
+#painelAdmin tr:hover {background-color:#f1f7ff;}
+#resultado {background:#e8f0fe; padding:15px; border-radius:8px; margin-top:20px; text-align:left; color:#222; font-size:15px;}
+footer {font-size:13px; color:#888; margin-top:38px; user-select:none;}
+
+/* Modal login admin */
+#loginAdmin {display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.6); z-index:9999; justify-content:center; align-items:center;}
+#loginAdmin > div {background:#fff; padding:25px 20px; border-radius:12px; max-width:320px; width:90%; text-align:center; box-shadow:0 0 15px rgba(0,0,0,0.3);}
+#loginAdmin input {width:100%; padding:10px; margin:10px 0; border-radius:8px; border:1px solid #ccc; font-size:16px;}
+#loginAdmin button {padding:10px 15px; margin:5px; border-radius:8px; border:none; cursor:pointer; font-weight:bold; font-size:16px;}
+#loginAdmin button:first-child {background-color:#2c7be5; color:#fff; width:45%;}
+#loginAdmin button:last-child {background-color:#999; color:#fff; width:45%;}
+#erroLogin {color:red; margin-top:10px; display:none;}
 </style>
 </head>
 <body>
@@ -18,52 +44,52 @@
 <p class="subtitulo">Simule seu empréstimo de forma rápida e prática</p>
 
 {% if admin_logado %}
-<div>
-    <button onclick="togglePainel()" style="background:#1565d8;color:white;border:none;padding:10px 15px;border-radius:8px;margin-right:10px;cursor:pointer;">📋 Painel Administrativo</button>
-    <button onclick="logout()" style="background:#d9534f;color:white;border:none;padding:10px 15px;border-radius:8px;cursor:pointer;">Sair</button>
-</div>
+    <div>
+        <button onclick="togglePainel()" style="background:#1565d8;color:white;border:none;padding:10px 15px;border-radius:8px;margin-right:10px;cursor:pointer;">📋 Painel Administrativo</button>
+        <button onclick="logout()" style="background:#d9534f;color:white;border:none;padding:10px 15px;border-radius:8px;cursor:pointer;">Sair</button>
+    </div>
 
-{% if mostrar_painel %}
-<div id="painelAdmin">
-    <h2>📋 Solicitações de Empréstimo</h2>
-    {% if solicitacoes %}
-    <table>
-        <thead>
-            <tr>
-                <th>Data</th>
-                <th>Nome</th>
-                <th>CPF</th>
-                <th>Endereco</th>
-                <th>Celular</th>
-                <th>Valor</th>
-                <th>Dias</th>
-                <th>Juros</th>
-                <th>Total</th>
-                <th>Excluir</th>
-            </tr>
-        </thead>
-        <tbody>
-        {% for s in solicitacoes %}
-            <tr>
-                <td>{{ s.data }}</td>
-                <td>{{ s.nome }}</td>
-                <td>{{ s.cpf }}</td>
-                <td>{{ s.endereco }}</td>
-                <td>{{ s.celular }}</td>
-                <td>R$ {{ '%.2f'|format(s.valor) }}</td>
-                <td>{{ s.dias }}</td>
-                <td>R$ {{ '%.2f'|format(s.juros) }}</td>
-                <td>R$ {{ '%.2f'|format(s.total) }}</td>
-                <td><button class="btn-excluir" data-index="{{ loop.index0 }}" style="background:#d9534f;color:white;border:none;padding:6px 10px;border-radius:6px;cursor:pointer;">Excluir</button></td>
-            </tr>
-        {% endfor %}
-        </tbody>
-    </table>
-    {% else %}
-    <p>Nenhuma solicitação ainda.</p>
+    {% if mostrar_painel %}
+        <div id="painelAdmin">
+        <h2>📋 Solicitações de Empréstimo</h2>
+        {% if solicitacoes %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Nome</th>
+                        <th>CPF</th>
+                        <th>Endereco</th>
+                        <th>Celular</th>
+                        <th>Valor</th>
+                        <th>Dias</th>
+                        <th>Juros</th>
+                        <th>Total</th>
+                        <th>Excluir</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for s in solicitacoes %}
+                    <tr>
+                        <td>{{ s.data }}</td>
+                        <td>{{ s.nome }}</td>
+                        <td>{{ s.cpf }}</td>
+                        <td>{{ s.endereco }}</td>
+                        <td>{{ s.celular }}</td>
+                        <td>R$ {{ '%.2f'|format(s.valor) }}</td>
+                        <td>{{ s.dias }}</td>
+                        <td>R$ {{ '%.2f'|format(s.juros) }}</td>
+                        <td>R$ {{ '%.2f'|format(s.total) }}</td>
+                        <td><button class="btn-excluir" data-index="{{ loop.index0 }}" style="background:#d9534f;color:white;border:none;padding:6px 10px;border-radius:6px;cursor:pointer;">Excluir</button></td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>Nenhuma solicitação ainda.</p>
+        {% endif %}
+        </div>
     {% endif %}
-</div>
-{% endif %}
 
 {% else %}
 
@@ -81,7 +107,7 @@
     <input type="text" id="celular" name="celular" placeholder="(11) 91234-5678" required>
 
     <label for="valor">Valor do empréstimo (R$)</label>
-    <input type="number" id="valor" name="valor" step="1" placeholder="1000" required>
+    <input type="number" id="valor" name="valor" placeholder="1000" required>
 
     <label for="dias">Prazo em dias</label>
     <input type="number" id="dias" name="dias" placeholder="30" required>
@@ -119,8 +145,10 @@ const form = document.getElementById("formulario");
 const btnSolicitar = document.getElementById("btnSolicitar");
 const resultado = document.getElementById("resultado");
 
+// Variável global para guardar a simulação
 let dadosSimulacao = null;
 
+// Envio simulação
 btnSolicitar?.addEventListener("click", ()=>{
     if(!form.checkValidity()){form.reportValidity(); return;}
     const formData = new FormData(form);
@@ -130,17 +158,8 @@ btnSolicitar?.addEventListener("click", ()=>{
     .then(data=>{
         if(data.erro){resultado.innerHTML=`<p style="color:red;">Erro: ${data.erro}</p>`;}
         else{
-            // Guarda os dados da simulação (com números corretos)
-            dadosSimulacao = {
-                nome: data.nome,
-                cpf: data.cpf,
-                endereco: data.endereco,
-                celular: data.celular,
-                valor: Number(data.valor),
-                dias: Number(data.dias),
-                juros: Number(data.juros),
-                total: Number(data.total)
-            };
+            // Guarda os dados da simulação para confirmar depois
+            dadosSimulacao = data;
 
             resultado.innerHTML=`
             <h2>📄 Resultado da Simulação</h2>
@@ -210,7 +229,7 @@ function login(){
 
 // Logout
 function logout(){
-    const formData = new FormData();
+    const formData=new FormData();
     formData.append("acao","logout");
     fetch("/",{method:"POST",body:formData}).then(()=>location.reload());
 }
@@ -244,7 +263,15 @@ function confirmarSolicitacao(){
 
     const formData = new FormData();
     formData.append("acao","confirmar");
-    formData.append("dados", JSON.stringify(dadosSimulacao));
+    // Inclui todos os campos para salvar
+    formData.append("nome", dadosSimulacao.nome);
+    formData.append("cpf", dadosSimulacao.cpf);
+    formData.append("endereco", dadosSimulacao.endereco);
+    formData.append("celular", dadosSimulacao.celular);
+    formData.append("valor", dadosSimulacao.valor);
+    formData.append("dias", dadosSimulacao.dias);
+    formData.append("juros", dadosSimulacao.juros);
+    formData.append("total", dadosSimulacao.total);
 
     fetch("/", {method:"POST", body:formData})
     .then(r=>r.json())
