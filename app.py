@@ -55,6 +55,7 @@ def init_db():
             id SERIAL PRIMARY KEY,
             nome TEXT,
             cpf TEXT,
+            endereco TEXT,
             celular TEXT,
             valor INTEGER,
             dias INTEGER,
@@ -73,7 +74,7 @@ init_db()
 def carregar_solicitacoes():
     conn = get_db()
     cur = conn.cursor()
-    cur.execute("SELECT nome, cpf, celular, valor, dias, juros, total, data FROM solicitacoes ORDER BY id DESC")
+    cur.execute("SELECT nome, cpf, endereco, celular, valor, dias, juros, total, data FROM solicitacoes ORDER BY id DESC")
     rows = cur.fetchall()
     cur.close()
     conn.close()
@@ -82,12 +83,13 @@ def carregar_solicitacoes():
         {
             "nome": r[0],
             "cpf": r[1],
-            "celular": r[2],
-            "valor": r[3],
-            "dias": r[4],
-            "juros": r[5],
-            "total": r[6],
-            "data": r[7],
+            "endereco": r[2],
+            "celular": r[3],
+            "valor": r[4],
+            "dias": r[5],
+            "juros": r[6],
+            "total": r[7],
+            "data": r[8],
         }
         for r in rows
     ]
@@ -96,11 +98,12 @@ def salvar_solicitacao(dados):
     conn = get_db()
     cur = conn.cursor()
     cur.execute("""
-        INSERT INTO solicitacoes (nome, cpf, celular, valor, dias, juros, total, data)
-        VALUES (%s,%s,%s,%s,%s,%s,%s,%s)
+        INSERT INTO solicitacoes (nome, cpf, endereco, celular, valor, dias, juros, total, data)
+        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)
     """, (
         dados["nome"],
         dados["cpf"],
+        dados["endereco"],
         dados["celular"],
         dados["valor"],
         dados["dias"],
