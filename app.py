@@ -103,7 +103,7 @@ def salvar_solicitacao(dados):
     """, (
         dados["nome"],
         dados["cpf"],
-        dados.get("endereco",""),  # garante que endereço seja salvo mesmo vazio
+        dados["endereco"],
         dados["celular"],
         dados["valor"],
         dados["dias"],
@@ -169,6 +169,11 @@ def index():
         elif acao == "confirmar":
             try:
                 dados = json.loads(request.form.get("dados"))
+                # Garantir que números estejam corretos
+                dados["valor"] = int(dados["valor"])
+                dados["dias"] = int(dados["dias"])
+                dados["juros"] = int(dados["juros"])
+                dados["total"] = int(dados["total"])
                 salvar_solicitacao(dados)
                 return jsonify(ok=True)
             except Exception as e:
@@ -202,6 +207,7 @@ def index():
         mostrar_painel=session.get("admin", False)
     )
 
+# === Ajuste para produção (Railway / Render) ===
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
