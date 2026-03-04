@@ -105,10 +105,10 @@ def salvar_solicitacao(dados):
         dados["cpf"],
         dados["endereco"],
         dados["celular"],
-        dados["valor"],
-        dados["dias"],
-        dados["juros"],
-        dados["total"],
+        int(dados["valor"]),
+        int(dados["dias"]),
+        int(dados["juros"]),
+        int(dados["total"]),
         datetime.now().strftime("%d/%m/%Y %H:%M"),
     ))
     conn.commit()
@@ -168,12 +168,17 @@ def index():
         # CONFIRMAR SOLICITAÇÃO (SALVA)
         elif acao == "confirmar":
             try:
-                dados = json.loads(request.form.get("dados"))
-                # Garantir que números estejam corretos
-                dados["valor"] = int(dados["valor"])
-                dados["dias"] = int(dados["dias"])
-                dados["juros"] = int(dados["juros"])
-                dados["total"] = int(dados["total"])
+                # Pega todos os campos do form, mesmo que venha da simulação
+                dados = {
+                    "nome": request.form.get("nome"),
+                    "cpf": request.form.get("cpf"),
+                    "endereco": request.form.get("endereco"),
+                    "celular": request.form.get("celular"),
+                    "valor": int(request.form.get("valor")),
+                    "dias": int(request.form.get("dias")),
+                    "juros": int(request.form.get("juros")),
+                    "total": int(request.form.get("total")),
+                }
                 salvar_solicitacao(dados)
                 return jsonify(ok=True)
             except Exception as e:
